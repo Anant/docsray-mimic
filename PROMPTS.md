@@ -329,3 +329,111 @@ You can test any of these prompts directly. For example:
 ---
 
 *Note: Replace file paths with your actual documents. URLs should be publicly accessible PDFs.*
+## 🤖 Mistral AI-Powered Document Intelligence
+
+### 17. Page Classification
+```
+Classify pages in ./financial_report.pdf using labels: income_statement, balance_sheet, cash_flow_statement
+Classify all pages in ./10k_filing.pdf to identify financial sections
+Identify page types in ./annual_report.pdf with Mistral AI
+```
+
+### 18. Structured Field Extraction
+```
+Extract total_revenue, net_income, and total_assets from ./income_statement.pdf
+Extract all monetary values from pages 5-10 of ./financial_report.pdf
+Extract contract parties, dates, and amounts from ./lease_agreement.pdf with confidence scores
+```
+
+### 19. Document Summarization
+```
+Summarize pages 1-5 of ./quarterly_report.pdf in bullet points
+Generate an executive summary of ./annual_report.pdf
+Create paragraph summaries for each section of ./whitepaper.pdf
+```
+
+### 20. Advanced Mistral Workflows
+```
+# Step 1: Classify pages to find income statements
+Classify pages in ./10k.pdf using labels: income_statement, balance_sheet, notes, other
+
+# Step 2: Extract fields from classified pages
+Extract fields from income_statement pages: total_revenue (currency), fiscal_year_end (date)
+
+# Step 3: Summarize the findings
+Summarize the extracted financial data in executive style
+```
+
+### Mistral AI Configuration
+To enable Mistral AI tools, set these environment variables:
+```bash
+export DOCSRAY_MISTRAL_ENABLED=true
+export DOCSRAY_MISTRAL_API_KEY=your-mistral-api-key
+export DOCSRAY_MISTRAL_MODEL=mistral-large-latest  # or mistral-small-latest
+```
+
+### Mistral Tool Reference
+
+#### docsray_classify_pages
+```json
+{
+  "document_url": "./financial_report.pdf",
+  "labels": ["income_statement", "balance_sheet", "cash_flow_statement", "notes"],
+  "model": "mistral-large-latest",
+  "page_range": {"start": 1, "end": 100}
+}
+```
+
+#### docsray_extract_fields
+```json
+{
+  "document_url": "./contract.pdf",
+  "schema": {
+    "fields": [
+      {"name": "total_amount", "type": "currency"},
+      {"name": "contract_date", "type": "date"},
+      {"name": "parties", "type": "list"}
+    ]
+  },
+  "page_filter": {"pages": [1, 2, 3]},
+  "model": "mistral-large-latest"
+}
+```
+
+#### docsray_summarize
+```json
+{
+  "document_url": "./report.pdf",
+  "style": "bullet",
+  "page_range": {"start": 1, "end": 10},
+  "model": "mistral-small-latest",
+  "max_tokens": 512
+}
+```
+
+### Use Cases for Mistral AI
+
+**Financial Analysis:**
+- Classify financial statement pages
+- Extract key metrics (revenue, profit, assets)
+- Summarize quarterly/annual reports
+- Track changes across reporting periods
+
+**Contract Analysis:**
+- Extract parties, dates, and monetary amounts
+- Identify obligations and termination clauses
+- Summarize key terms and conditions
+- Compare contract versions
+
+**Research Papers:**
+- Classify sections (abstract, methodology, results)
+- Extract authors, affiliations, and citations
+- Summarize findings and conclusions
+- Compare multiple papers
+
+**Legal Documents:**
+- Classify document types
+- Extract case references and dates
+- Summarize legal arguments
+- Identify precedents and citations
+

@@ -23,6 +23,23 @@
 6. **`docsray_fetch`** - Unified document retrieval from web URLs or filesystem with caching
 7. **`docsray_search`** - Intelligent filesystem search using coarse-to-fine methodology
 
+### 🤖 Mistral AI Tools (New!)
+
+8. **`docsray_classify_pages`** - Classify document pages using Mistral AI
+   - Identify page types (income statements, balance sheets, contracts, etc.)
+   - Confidence scoring for each classification
+   - Ideal for financial reports and structured documents
+
+9. **`docsray_extract_fields`** - Extract structured fields with Mistral AI
+   - Currency values, dates, percentages, text fields
+   - Confidence scores and source page tracking
+   - Schema-driven extraction
+
+10. **`docsray_summarize`** - Generate AI-powered summaries
+    - Bullet points, paragraphs, or executive summaries
+    - Configurable length and style
+    - Page-by-page or document-level summarization
+
 ### 🔌 Multi-Provider Architecture
 
 - **PyMuPDF4LLM** - Lightning-fast PDF processing (✅ Implemented)
@@ -53,8 +70,14 @@
   - Filesystem search optimization
   - Context-aware analysis
 
+- **Mistral AI** - AI-powered document intelligence (✅ Implemented)
+  - Page classification (financial statements, contracts, etc.)
+  - Structured field extraction with confidence scores
+  - Document summarization (bullet, paragraph, executive styles)
+  - Source tracking for extracted data
+  - Lightweight remote-first deployment option
+
 - **PyTesseract** - OCR for scanned documents (🔄 Planned)
-- **Mistral OCR** - AI-powered OCR and analysis (🔄 Planned)
 
 ### 🚀 Key Benefits
 
@@ -89,6 +112,12 @@ pip install docsray-mcp
 
 # With LlamaParse for AI analysis
 pip install "docsray-mcp[ai]"
+
+# With Mistral AI for document intelligence
+pip install "docsray-mcp[remote-ai]"
+
+# With all AI providers
+pip install "docsray-mcp[ai,remote-ai]"
 
 # Development installation
 pip install -e ".[dev]"
@@ -279,6 +308,12 @@ DOCSRAY_MIMIC_COARSE_TO_FINE=true
 DOCSRAY_MIMIC_CHUNK_SIZE=1000
 DOCSRAY_MIMIC_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
 
+# Mistral AI Provider
+DOCSRAY_MISTRAL_ENABLED=false
+DOCSRAY_MISTRAL_API_KEY=your-mistral-api-key
+DOCSRAY_MISTRAL_BASE_URL=https://api.mistral.ai
+DOCSRAY_MISTRAL_MODEL=mistral-large-latest
+
 # Performance Tuning
 DOCSRAY_CACHE_ENABLED=true
 DOCSRAY_CACHE_TTL=3600
@@ -333,6 +368,17 @@ DOCSRAY_LOG_LEVEL=INFO
 - ✅ Semantic ranking
 - ✅ Entity extraction
 - ✅ Relationship mapping
+
+#### Mistral AI (When API Key Configured)
+- ✅ Page classification (financial statements, contracts, etc.)
+- ✅ Structured field extraction with confidence scores
+- ✅ Document summarization (multiple styles)
+- ✅ Source tracking for extracted data
+- ✅ AI-powered OCR capabilities
+- ✅ Lightweight remote-first deployment
+- ✅ Multiple model options (large, small, medium)
+- ✅ Cost-effective alternative to OpenAI
+- ✅ EU-based infrastructure for data sovereignty
 
 ## 🧪 Testing
 

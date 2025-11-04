@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from .config import DocsrayConfig
 from .providers.registry import ProviderRegistry
-from .tools import extract, fetch, map, peek, search, seek, xray
+from .tools import extract, fetch, map, peek, search, seek, xray, mistral_tools
 from .utils.cache import DocumentCache
 from .utils.logging import setup_logging
 
@@ -424,6 +424,66 @@ class DocsrayServer:
                 provider=provider
             )
 
+        # Mistral AI tools
+        @self.mcp.tool(
+            name="docsray_classify_pages",
+            description="Classify pages in a PDF document using Mistral AI. Identifies page types such as income_statement, balance_sheet, cash_flow_statement, notes, and more. Best for financial reports, annual reports, 10-K/10-Q filings."
+        )
+        async def tool_classify_pages(
+            document_url: str = Field(..., description="URL or local path to PDF document"),
+            labels: List[str] = Field(..., description="Valid classification labels (e.g., income_statement, balance_sheet)"),
+            model: Optional[str] = Field(None, description="Mistral model (default: mistral-large-latest)"),
+            page_range: Optional[Dict[str, int]] = Field(None, description="Optional page range to classify (start, end)")
+        ) -> Dict[str, Any]:
+            return await mistral_tools.handle_classify_pages(
+                document_url=document_url,
+                labels=labels,
+                model=model,
+                page_range=page_range,
+                registry=self.registry,
+                cache=self.cache
+            )
+
+        @self.mcp.tool(
+            name="docsray_extract_fields",
+            description="Extract structured fields from PDF pages using Mistral AI. Supports extraction of currency values, dates, percentages, text fields. Provides confidence scores and source tracking. Best for financial statements, contracts, invoices."
+        )
+        async def tool_extract_fields(
+            document_url: str = Field(..., description="URL or local path to PDF document"),
+            schema: Dict[str, Any] = Field(..., description="Field definitions to extract (fields array with name, type)"),
+            page_filter: Optional[Dict[str, Any]] = Field(None, description="Optional filter for which pages to extract from"),
+            model: Optional[str] = Field(None, description="Mistral model (default: mistral-large-latest)")
+        ) -> Dict[str, Any]:
+            return await mistral_tools.handle_extract_fields(
+                document_url=document_url,
+                schema=schema,
+                page_filter=page_filter,
+                model=model,
+                registry=self.registry,
+                cache=self.cache
+            )
+
+        @self.mcp.tool(
+            name="docsray_summarize",
+            description="Generate summaries of PDF pages using Mistral AI. Supports bullet, paragraph, and executive summary styles. Best for long documents, reports, research papers."
+        )
+        async def tool_summarize(
+            document_url: str = Field(..., description="URL or local path to PDF document"),
+            style: str = Field("bullet", description="Summary style (bullet, paragraph, executive)"),
+            page_range: Optional[Dict[str, int]] = Field(None, description="Optional page range to summarize (start, end)"),
+            model: Optional[str] = Field(None, description="Mistral model (default: mistral-small-latest)"),
+            max_tokens: int = Field(512, description="Maximum tokens per summary")
+        ) -> Dict[str, Any]:
+            return await mistral_tools.handle_summarize(
+                document_url=document_url,
+                style=style,
+                page_range=page_range,
+                model=model,
+                max_tokens=max_tokens,
+                registry=self.registry,
+                cache=self.cache
+            )
+
     def _initialize_providers(self) -> None:
         """Initialize enabled providers."""
         # PyMuPDF4LLM provider (always enabled in phase 1)
@@ -467,6 +527,23 @@ class DocsrayServer:
                 logger.info("MIMIC.DocsRay provider registered (will initialize on first use)")
             except Exception as e:
                 logger.error(f"Failed to register MIMIC.DocsRay provider: {e}")
+
+        # Mistral AI provider
+        if self.config.providers.mistral_ocr.enabled:
+            try:
+                from .providers.mistral import MistralProvider
+                provider = MistralProvider()
+                # Store config for lazy initialization
+                provider.config = self.config.providers.mistral_ocr
+                self.registry.register(provider)
+                logger.info("Mistral AI provider registered (will initialize on first use)")
+            except ModuleNotFoundError as e:
+                logger.error(
+                    "Failed to register Mistral provider: %s. Install with 'pip install \"docsray-mcp[remote-ai]\"' or 'pip install mistralai'.",
+                    e
+                )
+            except Exception as e:
+                logger.error(f"Failed to register Mistral provider: {e}")
 
         # IBM.Docling provider
         if self.config.providers.ibm_docling.enabled:

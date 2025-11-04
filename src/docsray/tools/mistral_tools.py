@@ -1,5 +1,6 @@
 """MCP tools for Mistral AI-powered document intelligence."""
 
+import json
 import logging
 from pathlib import Path
 from typing import Any, Optional
@@ -10,6 +11,27 @@ from ..utils.cache import DocumentCache
 from ..utils.documents import download_document, get_local_document, is_url
 
 logger = logging.getLogger(__name__)
+
+
+def coerce_parameter(param: Any, expected_type: type) -> Any:
+    """Convert stringified JSON parameters to their expected types.
+
+    Args:
+        param: The parameter value (possibly a JSON string)
+        expected_type: The expected Python type (dict or list)
+
+    Returns:
+        The parameter converted to the expected type, or the original value if conversion fails
+    """
+    if isinstance(param, str) and expected_type in (dict, list):
+        try:
+            return json.loads(param)
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.warning(
+                f"Failed to parse parameter as {expected_type.__name__}: {e}"
+            )
+            return param
+    return param
 
 
 async def handle_classify_pages(
@@ -34,6 +56,10 @@ async def handle_classify_pages(
         Classification results with page labels and confidence scores
     """
     try:
+        # Coerce parameters if they are stringified JSON
+        labels = coerce_parameter(labels, list)
+        page_range = coerce_parameter(page_range, dict) if page_range else None
+
         # Get Mistral provider
         provider = registry.get_provider("mistral-ocr") if registry else None
         if not provider:
@@ -119,6 +145,10 @@ async def handle_extract_fields(
         Extracted fields with values, confidence scores, and source tracking
     """
     try:
+        # Coerce parameters if they are stringified JSON
+        schema = coerce_parameter(schema, dict)
+        page_filter = coerce_parameter(page_filter, dict) if page_filter else None
+
         # Get Mistral provider
         provider = registry.get_provider("mistral-ocr") if registry else None
         if not provider:
@@ -198,6 +228,9 @@ async def handle_summarize(
         Page summaries
     """
     try:
+        # Coerce parameters if they are stringified JSON
+        page_range = coerce_parameter(page_range, dict) if page_range else None
+
         # Get Mistral provider
         provider = registry.get_provider("mistral-ocr") if registry else None
         if not provider:

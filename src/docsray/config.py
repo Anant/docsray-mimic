@@ -53,7 +53,7 @@ class MistralOCRConfig(BaseModel):
     enabled: bool = Field(default=False)
     api_key: Optional[str] = Field(default=None)
     base_url: str = Field(default="https://api.mistral.ai")
-    model: str = Field(default="mistral-ocr-latest")
+    model: str = Field(default="pixtral-12b-2409")
 
 
 class LlamaParseConfig(BaseModel):
@@ -98,37 +98,68 @@ class MimicDocsrayConfig(BaseModel):
     @classmethod
     def validate_vector_store_type(cls, v: str) -> str:
         if v not in ["faiss", "chroma", "pinecone", "memory"]:
-            raise ValueError("vector_store_type must be 'faiss', 'chroma', 'pinecone', or 'memory'")
+            raise ValueError(
+                "vector_store_type must be 'faiss', 'chroma', 'pinecone', or 'memory'"
+            )
         return v
 
 
 class IBMDoclingConfig(BaseModel):
     """IBM.Docling provider configuration."""
+
     enabled: bool = Field(default=False)
-    use_vlm: bool = Field(default=True, description="Use Visual Language Model for document understanding")
-    use_asr: bool = Field(default=False, description="Use Automatic Speech Recognition for audio files")
-    output_format: str = Field(default="DoclingDocument", description="Output format: DoclingDocument, markdown, json")
-    ocr_enabled: bool = Field(default=True, description="Enable OCR for scanned documents")
-    table_detection: bool = Field(default=True, description="Enable advanced table detection")
-    figure_detection: bool = Field(default=True, description="Enable figure and image classification")
+    use_vlm: bool = Field(
+        default=True, description="Use Visual Language Model for document understanding"
+    )
+    use_asr: bool = Field(
+        default=False, description="Use Automatic Speech Recognition for audio files"
+    )
+    output_format: str = Field(
+        default="DoclingDocument",
+        description="Output format: DoclingDocument, markdown, json",
+    )
+    ocr_enabled: bool = Field(
+        default=True, description="Enable OCR for scanned documents"
+    )
+    table_detection: bool = Field(
+        default=True, description="Enable advanced table detection"
+    )
+    figure_detection: bool = Field(
+        default=True, description="Enable figure and image classification"
+    )
 
     # Advanced layout understanding options
-    layout_model: Optional[str] = Field(default=None, description="Custom layout analysis model")
-    reading_order: bool = Field(default=True, description="Preserve reading order in output")
+    layout_model: Optional[str] = Field(
+        default=None, description="Custom layout analysis model"
+    )
+    reading_order: bool = Field(
+        default=True, description="Preserve reading order in output"
+    )
 
     # Performance settings
-    batch_size: int = Field(default=1, ge=1, le=10, description="Batch size for processing multiple documents")
-    max_pages: Optional[int] = Field(default=None, ge=1, description="Maximum pages to process per document")
+    batch_size: int = Field(
+        default=1,
+        ge=1,
+        le=10,
+        description="Batch size for processing multiple documents",
+    )
+    max_pages: Optional[int] = Field(
+        default=None, ge=1, description="Maximum pages to process per document"
+    )
 
     # Model settings
-    device: Optional[str] = Field(default=None, description="Device for model execution (cpu, cuda, etc.)")
+    device: Optional[str] = Field(
+        default=None, description="Device for model execution (cpu, cuda, etc.)"
+    )
     model_path: Optional[str] = Field(default=None, description="Custom model path")
 
     @field_validator("output_format")
     @classmethod
     def validate_output_format(cls, v: str) -> str:
         if v not in ["DoclingDocument", "markdown", "json"]:
-            raise ValueError("output_format must be 'DoclingDocument', 'markdown', or 'json'")
+            raise ValueError(
+                "output_format must be 'DoclingDocument', 'markdown', or 'json'"
+            )
         return v
 
 
@@ -170,66 +201,123 @@ class DocsrayConfig(BaseModel):
             "providers": {
                 "default": os.getenv("DOCSRAY_DEFAULT_PROVIDER", "auto"),
                 "pymupdf4llm": {
-                    "enabled": os.getenv("DOCSRAY_PYMUPDF_ENABLED", "true").lower() == "true",
+                    "enabled": os.getenv("DOCSRAY_PYMUPDF_ENABLED", "true").lower()
+                    == "true",
                 },
                 "pytesseract": {
-                    "enabled": os.getenv("DOCSRAY_PYTESSERACT_ENABLED", "false").lower() == "true",
+                    "enabled": os.getenv("DOCSRAY_PYTESSERACT_ENABLED", "false").lower()
+                    == "true",
                     "tesseract_path": os.getenv("DOCSRAY_TESSERACT_PATH"),
-                    "languages": os.getenv("DOCSRAY_TESSERACT_LANGUAGES", "eng").split(","),
+                    "languages": os.getenv("DOCSRAY_TESSERACT_LANGUAGES", "eng").split(
+                        ","
+                    ),
                 },
                 "ocrmypdf": {
-                    "enabled": os.getenv("DOCSRAY_OCRMYPDF_ENABLED", "false").lower() == "true",
+                    "enabled": os.getenv("DOCSRAY_OCRMYPDF_ENABLED", "false").lower()
+                    == "true",
                 },
                 "mistral_ocr": {
-                    "enabled": os.getenv("DOCSRAY_MISTRAL_ENABLED", "false").lower() == "true",
+                    "enabled": os.getenv("DOCSRAY_MISTRAL_ENABLED", "false").lower()
+                    == "true",
                     "api_key": os.getenv("DOCSRAY_MISTRAL_API_KEY"),
-                    "base_url": os.getenv("DOCSRAY_MISTRAL_BASE_URL", "https://api.mistral.ai"),
+                    "base_url": os.getenv(
+                        "DOCSRAY_MISTRAL_BASE_URL", "https://api.mistral.ai"
+                    ),
                 },
                 "llama_parse": {
-                    "enabled": os.getenv("DOCSRAY_LLAMAPARSE_ENABLED", "false").lower() == "true",
+                    "enabled": os.getenv("DOCSRAY_LLAMAPARSE_ENABLED", "false").lower()
+                    == "true",
                     # Support both DOCSRAY_LLAMAPARSE_API_KEY (preferred) and LLAMAPARSE_API_KEY (fallback)
                     # This allows compatibility with both Docsray-specific config and standard LlamaParse env var
-                    "api_key": os.getenv("DOCSRAY_LLAMAPARSE_API_KEY") or os.getenv("LLAMAPARSE_API_KEY"),
+                    "api_key": os.getenv("DOCSRAY_LLAMAPARSE_API_KEY")
+                    or os.getenv("LLAMAPARSE_API_KEY"),
                     "mode": os.getenv("DOCSRAY_LLAMAPARSE_MODE", "balanced"),
                 },
                 "mimic_docsray": {
-                    "enabled": os.getenv("DOCSRAY_MIMIC_ENABLED", "false").lower() == "true",
+                    "enabled": os.getenv("DOCSRAY_MIMIC_ENABLED", "false").lower()
+                    == "true",
                     "api_key": os.getenv("DOCSRAY_MIMIC_API_KEY"),
-                    "base_url": os.getenv("DOCSRAY_MIMIC_BASE_URL", "https://api.docsray.com"),
+                    "base_url": os.getenv(
+                        "DOCSRAY_MIMIC_BASE_URL", "https://api.docsray.com"
+                    ),
                     "model": os.getenv("DOCSRAY_MIMIC_MODEL", "docsray-v1"),
                     "chunk_size": int(os.getenv("DOCSRAY_MIMIC_CHUNK_SIZE", "1000")),
-                    "chunk_overlap": int(os.getenv("DOCSRAY_MIMIC_CHUNK_OVERLAP", "200")),
+                    "chunk_overlap": int(
+                        os.getenv("DOCSRAY_MIMIC_CHUNK_OVERLAP", "200")
+                    ),
                     "max_chunks": int(os.getenv("DOCSRAY_MIMIC_MAX_CHUNKS", "100")),
                     "search_depth": os.getenv("DOCSRAY_MIMIC_SEARCH_DEPTH", "deep"),
-                    "semantic_ranking": os.getenv("DOCSRAY_MIMIC_SEMANTIC_RANKING", "true").lower() == "true",
-                    "multimodal_analysis": os.getenv("DOCSRAY_MIMIC_MULTIMODAL", "true").lower() == "true",
-                    "hybrid_ocr": os.getenv("DOCSRAY_MIMIC_HYBRID_OCR", "true").lower() == "true",
+                    "semantic_ranking": os.getenv(
+                        "DOCSRAY_MIMIC_SEMANTIC_RANKING", "true"
+                    ).lower()
+                    == "true",
+                    "multimodal_analysis": os.getenv(
+                        "DOCSRAY_MIMIC_MULTIMODAL", "true"
+                    ).lower()
+                    == "true",
+                    "hybrid_ocr": os.getenv("DOCSRAY_MIMIC_HYBRID_OCR", "true").lower()
+                    == "true",
                     "tesseract_path": os.getenv("DOCSRAY_MIMIC_TESSERACT_PATH"),
-                    "coarse_to_fine": os.getenv("DOCSRAY_MIMIC_COARSE_TO_FINE", "true").lower() == "true",
-                    "rag_enabled": os.getenv("DOCSRAY_MIMIC_RAG_ENABLED", "true").lower() == "true",
-                    "vector_store_type": os.getenv("DOCSRAY_MIMIC_VECTOR_STORE", "faiss"),
-                    "embedding_model": os.getenv("DOCSRAY_MIMIC_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"),
+                    "coarse_to_fine": os.getenv(
+                        "DOCSRAY_MIMIC_COARSE_TO_FINE", "true"
+                    ).lower()
+                    == "true",
+                    "rag_enabled": os.getenv(
+                        "DOCSRAY_MIMIC_RAG_ENABLED", "true"
+                    ).lower()
+                    == "true",
+                    "vector_store_type": os.getenv(
+                        "DOCSRAY_MIMIC_VECTOR_STORE", "faiss"
+                    ),
+                    "embedding_model": os.getenv(
+                        "DOCSRAY_MIMIC_EMBEDDING_MODEL",
+                        "sentence-transformers/all-MiniLM-L6-v2",
+                    ),
                 },
                 "ibm_docling": {
-                    "enabled": os.getenv("DOCSRAY_IBM_DOCLING_ENABLED", "false").lower() == "true",
-                    "use_vlm": os.getenv("DOCSRAY_IBM_DOCLING_USE_VLM", "true").lower() == "true",
-                    "use_asr": os.getenv("DOCSRAY_IBM_DOCLING_USE_ASR", "false").lower() == "true",
-                    "output_format": os.getenv("DOCSRAY_IBM_DOCLING_OUTPUT_FORMAT", "DoclingDocument"),
-                    "ocr_enabled": os.getenv("DOCSRAY_IBM_DOCLING_OCR_ENABLED", "true").lower() == "true",
-                    "table_detection": os.getenv("DOCSRAY_IBM_DOCLING_TABLE_DETECTION", "true").lower() == "true",
-                    "figure_detection": os.getenv("DOCSRAY_IBM_DOCLING_FIGURE_DETECTION", "true").lower() == "true",
+                    "enabled": os.getenv("DOCSRAY_IBM_DOCLING_ENABLED", "false").lower()
+                    == "true",
+                    "use_vlm": os.getenv("DOCSRAY_IBM_DOCLING_USE_VLM", "true").lower()
+                    == "true",
+                    "use_asr": os.getenv("DOCSRAY_IBM_DOCLING_USE_ASR", "false").lower()
+                    == "true",
+                    "output_format": os.getenv(
+                        "DOCSRAY_IBM_DOCLING_OUTPUT_FORMAT", "DoclingDocument"
+                    ),
+                    "ocr_enabled": os.getenv(
+                        "DOCSRAY_IBM_DOCLING_OCR_ENABLED", "true"
+                    ).lower()
+                    == "true",
+                    "table_detection": os.getenv(
+                        "DOCSRAY_IBM_DOCLING_TABLE_DETECTION", "true"
+                    ).lower()
+                    == "true",
+                    "figure_detection": os.getenv(
+                        "DOCSRAY_IBM_DOCLING_FIGURE_DETECTION", "true"
+                    ).lower()
+                    == "true",
                     "layout_model": os.getenv("DOCSRAY_IBM_DOCLING_LAYOUT_MODEL"),
-                    "reading_order": os.getenv("DOCSRAY_IBM_DOCLING_READING_ORDER", "true").lower() == "true",
+                    "reading_order": os.getenv(
+                        "DOCSRAY_IBM_DOCLING_READING_ORDER", "true"
+                    ).lower()
+                    == "true",
                     "batch_size": int(os.getenv("DOCSRAY_IBM_DOCLING_BATCH_SIZE", "1")),
-                    "max_pages": int(os.getenv("DOCSRAY_IBM_DOCLING_MAX_PAGES")) if os.getenv("DOCSRAY_IBM_DOCLING_MAX_PAGES") else None,
+                    "max_pages": (
+                        int(os.getenv("DOCSRAY_IBM_DOCLING_MAX_PAGES"))
+                        if os.getenv("DOCSRAY_IBM_DOCLING_MAX_PAGES")
+                        else None
+                    ),
                     "device": os.getenv("DOCSRAY_IBM_DOCLING_DEVICE"),
                     "model_path": os.getenv("DOCSRAY_IBM_DOCLING_MODEL_PATH"),
                 },
             },
             "performance": {
-                "cache_enabled": os.getenv("DOCSRAY_CACHE_ENABLED", "true").lower() == "true",
+                "cache_enabled": os.getenv("DOCSRAY_CACHE_ENABLED", "true").lower()
+                == "true",
                 "cache_ttl": int(os.getenv("DOCSRAY_CACHE_TTL", "3600")),
-                "max_concurrent_requests": int(os.getenv("DOCSRAY_MAX_CONCURRENT_REQUESTS", "10")),
+                "max_concurrent_requests": int(
+                    os.getenv("DOCSRAY_MAX_CONCURRENT_REQUESTS", "10")
+                ),
                 "timeout_seconds": int(os.getenv("DOCSRAY_TIMEOUT_SECONDS", "120")),
             },
             "log_level": os.getenv("DOCSRAY_LOG_LEVEL", "INFO"),

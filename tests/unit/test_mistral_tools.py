@@ -112,7 +112,7 @@ class TestClassifyPagesParameterHandling:
                     # Call with stringified labels
                     result = await handle_classify_pages(
                         document_url="test.pdf",
-                        labels='["income_statement", "balance_sheet"]',  # String!
+                        labels='["income_statement", "balance_sheet"]',  # Stringified JSON to test parameter coercion
                         registry=mock_registry,
                     )
 
@@ -150,7 +150,7 @@ class TestClassifyPagesParameterHandling:
                     result = await handle_classify_pages(
                         document_url="test.pdf",
                         labels=["income_statement"],
-                        page_range='{"start": 1, "end": 5}',  # String!
+                        page_range='{"start": 1, "end": 5}',  # Stringified JSON to test parameter coercion
                         registry=mock_registry,
                     )
 
@@ -199,7 +199,7 @@ class TestExtractFieldsParameterHandling:
                     schema_str = '{"fields": [{"name": "revenue", "type": "currency"}]}'
                     result = await handle_extract_fields(
                         document_url="test.pdf",
-                        schema=schema_str,  # String!
+                        schema=schema_str,  # Stringified JSON to test parameter coercion
                         registry=mock_registry,
                     )
 
@@ -235,7 +235,7 @@ class TestExtractFieldsParameterHandling:
                     result = await handle_extract_fields(
                         document_url="test.pdf",
                         schema={"fields": [{"name": "test", "type": "text"}]},
-                        page_filter='{"pages": [1, 5, 10]}',  # String!
+                        page_filter='{"pages": [1, 5, 10]}',  # Stringified JSON to test parameter coercion
                         registry=mock_registry,
                     )
 
@@ -276,7 +276,7 @@ class TestSummarizeParameterHandling:
                     # Call with stringified page_range
                     result = await handle_summarize(
                         document_url="test.pdf",
-                        page_range='{"start": 1, "end": 10}',  # String!
+                        page_range='{"start": 1, "end": 10}',  # Stringified JSON to test parameter coercion
                         registry=mock_registry,
                     )
 

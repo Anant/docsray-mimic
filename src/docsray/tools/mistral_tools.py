@@ -28,7 +28,7 @@ def coerce_parameter(param: Any, expected_type: type) -> Any:
             return json.loads(param)
         except (json.JSONDecodeError, TypeError) as e:
             logger.warning(
-                f"Failed to parse parameter as {expected_type.__name__}: {e}"
+                f"Failed to parse parameter as {expected_type.__name__}: {type(e).__name__}"
             )
             return param
     return param

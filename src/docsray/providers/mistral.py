@@ -284,7 +284,7 @@ class MistralProvider(DocumentProvider):
             from mistralai.models import SystemMessage, UserMessage
 
             response = await self._client.chat.complete_async(
-                model=self.config.model if self.config else "mistral-ocr-latest",
+                model=self.config.model if self.config else "pixtral-12b-2409",
                 messages=[
                     SystemMessage(content=system_prompt),
                     UserMessage(content=content),
@@ -300,7 +300,7 @@ class MistralProvider(DocumentProvider):
             return {
                 "analysis": analysis_text,
                 "confidence": 0.85,  # Placeholder confidence score
-                "model": self.config.model if self.config else "mistral-ocr-latest",
+                "model": self.config.model if self.config else "pixtral-12b-2409",
             }
 
         except Exception as e:
@@ -327,7 +327,7 @@ Return a JSON object with the requested fields: {json.dumps(schema)}"""
             from mistralai.models import SystemMessage, UserMessage
 
             response = await self._client.chat.complete_async(
-                model=self.config.model if self.config else "mistral-ocr-latest",
+                model=self.config.model if self.config else "pixtral-12b-2409",
                 messages=[
                     SystemMessage(content=system_prompt),
                     UserMessage(content=content),

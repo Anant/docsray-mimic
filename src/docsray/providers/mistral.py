@@ -277,7 +277,8 @@ class MistralProvider(DocumentProvider):
             # Create analysis prompt
             system_prompt = options.get(
                 "system_prompt",
-                "You are a document analysis assistant. Analyze the following document and provide key insights.",
+                "You are a document analysis assistant. Analyze the following "
+                "document and provide key insights.",
             )
 
             # Call Mistral API
@@ -454,7 +455,9 @@ Return a JSON object with the requested fields: {json.dumps(schema)}"""
             from mistralai.models import SystemMessage, UserMessage
 
             logger.debug(f"Extracting fields with model: {model}")
-            logger.debug(f"Schema fields: {[f['name'] for f in schema.get('fields', [])]}")
+            logger.debug(
+                f"Schema fields: {[f['name'] for f in schema.get('fields', [])]}"
+            )
             logger.debug(f"Processing {len(inputs)} page(s)")
 
             response = await self._client.chat.complete_async(
@@ -561,12 +564,15 @@ Return a JSON object with the requested fields: {json.dumps(schema)}"""
 
     def _build_classification_prompt(self, labels: list[str]) -> str:
         """Build system prompt for page classification."""
-        return f"""You are analyzing a company's annual report. Below is a list of pages with page numbers
-and text samples. Classify each page into one of these categories: {', '.join(labels)}.
+        return f"""You are analyzing a company's annual report. Below is a list \
+of pages with page numbers and text samples. Classify each page into one of \
+these categories: {', '.join(labels)}.
 
-IMPORTANT: You MUST return a JSON object with a "labels" array containing the classification results.
+IMPORTANT: You MUST return a JSON object with a "labels" array containing \
+the classification results.
 
-Return JSON object with this exact format: {{"labels": [{{"page": int, "label": string, "confidence": float}}]}}.
+Return JSON object with this exact format: \
+{{"labels": [{{"page": int, "label": string, "confidence": float}}]}}.
 
 Rules:
 - Do not include EBITDA reconciliation pages under income_statement
@@ -579,7 +585,8 @@ Rules:
         """Build system prompt for field extraction."""
         fields_desc = "\n".join(
             [
-                f"- {f['name']} (type: {f['type']}, pattern: {f.get('pattern', 'any')})"
+                f"- {f['name']} (type: {f['type']}, "
+                f"pattern: {f.get('pattern', 'any')})"
                 for f in schema.get("fields", [])
             ]
         )
@@ -587,9 +594,12 @@ Rules:
         return f"""Extract the following fields from financial statement text:
 {fields_desc}
 
-IMPORTANT: You MUST return ONLY a valid JSON object, with no additional text or explanation.
+IMPORTANT: You MUST return ONLY a valid JSON object, with no additional \
+text or explanation.
 
-Return JSON object with this exact format: {{"fields": [{{"name": string, "value": typed_value, "confidence": float, "source": {{"page": int, "lineIdx": int?}}}}], "errors": []}}.
+Return JSON object with this exact format: {{"fields": [{{"name": string, \
+"value": typed_value, "confidence": float, "source": {{"page": int, \
+"lineIdx": int?}}}}], "errors": []}}.
 
 Rules:
 - Return null for missing fields
@@ -642,7 +652,10 @@ Focus on factual information and key data points. Avoid speculation."""
                 continue
 
             if not 0.0 <= item["confidence"] <= 1.0:
-                logger.warning(f"Invalid confidence {item['confidence']} for page {item.get('page')}")
+                logger.warning(
+                    f"Invalid confidence {item['confidence']} "
+                    f"for page {item.get('page')}"
+                )
                 skipped += 1
                 continue
 
@@ -651,7 +664,10 @@ Focus on factual information and key data points. Avoid speculation."""
         if skipped > 0:
             logger.warning(f"Skipped {skipped} invalid classification items")
 
-        logger.info(f"Validated {len(validated)} out of {len(result)} classification results")
+        logger.info(
+            f"Validated {len(validated)} out of {len(result)} "
+            f"classification results"
+        )
         return validated
 
     def _validate_extraction_result(
@@ -686,5 +702,8 @@ Focus on factual information and key data points. Avoid speculation."""
         if skipped > 0:
             logger.warning(f"Skipped {skipped} invalid field extractions")
 
-        logger.info(f"Validated {len(validated_fields)} out of {len(fields)} extracted fields")
+        logger.info(
+            f"Validated {len(validated_fields)} out of {len(fields)} "
+            f"extracted fields"
+        )
         return {"fields": validated_fields, "errors": errors}

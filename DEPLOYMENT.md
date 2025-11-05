@@ -83,7 +83,7 @@ Coolify is a self-hostable platform-as-a-service alternative to Heroku. Here's h
    - Connect to your Git repository
 
 2. **Configuration for Dockerfile Deployment**
-   - **Build Command**: `docker build --target runtime -t docsray-mcp .`
+   - **Build Command**: `make docker-build` (or `docker build --target runtime -t docsray-mcp .`)
    - **Container Port**: 3000 (if using HTTP mode)
    - **Health Check**: `/health` endpoint (for HTTP mode)
 

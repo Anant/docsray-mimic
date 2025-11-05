@@ -34,12 +34,15 @@ COPY src/ ./src/
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+# Set pip trusted hosts for environments with SSL issues
+ENV PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org"
+
 # Install Python dependencies
 # Use --trusted-host as fallback for environments with SSL issues
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel || \
-    pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -e . || \
-    pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org --no-cache-dir -e .
+    pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir -e .
 
 # ============================================================================
 # Runtime stage
@@ -80,13 +83,16 @@ RUN groupadd -r docsray && useradd -r -g docsray -d /app -s /bin/bash docsray
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+# Set pip trusted hosts for environments with SSL issues
+ENV PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org"
+
 # Set working directory and copy source code
 WORKDIR /app
 COPY --chown=docsray:docsray . .
 
 # Install the package in the runtime environment
 RUN pip install --no-cache-dir -e . || \
-    pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org --no-cache-dir -e .
+    pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir -e .
 
 # Create directories for data and cache
 RUN mkdir -p /app/data /app/cache /app/logs && \
@@ -131,7 +137,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install development Python packages
 RUN pip install --no-cache-dir -e ".[dev,ocr,ai]" || \
-    pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org --no-cache-dir -e ".[dev,ocr,ai]"
+    pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir -e ".[dev,ocr,ai]"
 
 # Switch back to docsray user
 USER docsray

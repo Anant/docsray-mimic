@@ -60,7 +60,7 @@ services:
     networks:
       - docsray-network
 
-  # Development server with all features enabled
+  # Development server with all features enabled (including PaddleOCR for local testing)
   docsray-dev:
     build:
       context: .
@@ -77,10 +77,15 @@ services:
       - DOCSRAY_LOG_LEVEL=DEBUG
       - DOCSRAY_PYMUPDF_ENABLED=true
       - DOCSRAY_PYTESSERACT_ENABLED=true
+      - DOCSRAY_PADDLEOCR_ENABLED=true
+      - DOCSRAY_PADDLEOCR_LANG=en
+      - DOCSRAY_PADDLEOCR_ENABLE_TABLE=true
       - DOCSRAY_CACHE_ENABLED=true
       # Add your API keys via .env file or environment
       # - DOCSRAY_LLAMAPARSE_API_KEY=${LLAMAPARSE_API_KEY}
       # - DOCSRAY_MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      # - DOCSRAY_MISTRAL_ENABLED=true
+      # - DOCSRAY_MIMIC_ENABLED=true
     volumes:
       # Mount source code for development
       - .:/app

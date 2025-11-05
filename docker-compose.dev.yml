@@ -22,6 +22,9 @@ services:
       - DOCSRAY_LOG_LEVEL=DEBUG
       - DOCSRAY_PYMUPDF_ENABLED=true
       - DOCSRAY_PYTESSERACT_ENABLED=true
+      - DOCSRAY_PADDLEOCR_ENABLED=true
+      - DOCSRAY_PADDLEOCR_LANG=en
+      - DOCSRAY_PADDLEOCR_ENABLE_TABLE=true
       - DOCSRAY_CACHE_ENABLED=true
       - PYTHONPATH=/app/src
       # Development flags

@@ -69,6 +69,9 @@ RUN apt-get update && apt-get install -y \
     poppler-utils \
     # Image processing
     libimage-exiftool-perl \
+    # PaddleOCR dependencies (for local builds)
+    libgl1 \
+    libglib2.0-0 \
     # Networking and security
     ca-certificates \
     curl \
@@ -90,9 +93,11 @@ ENV PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org"
 WORKDIR /app
 COPY --chown=docsray:docsray . .
 
-# Install the package in the runtime environment
-RUN pip install --no-cache-dir -e . || \
-    pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir -e .
+# Install the package in the runtime environment with optional dependencies
+# Users can enable/disable providers via environment variables
+# Use --trusted-host as fallback for environments with SSL issues
+RUN pip install --no-cache-dir -e ".[ocr,ai,remote-ai]" || \
+    pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir -e ".[ocr,ai,remote-ai]"
 
 # Create directories for data and cache
 RUN mkdir -p /app/data /app/cache /app/logs && \
@@ -135,9 +140,12 @@ RUN apt-get update && apt-get install -y \
     htop \
     && rm -rf /var/lib/apt/lists/*
 
-# Install development Python packages
-RUN pip install --no-cache-dir -e ".[dev,ocr,ai]" || \
-    pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir -e ".[dev,ocr,ai]"
+# Install development Python packages (including PaddleOCR for local testing)
+# Use --trusted-host as fallback for environments with SSL issues
+RUN (pip install --no-cache-dir -e ".[dev,ocr,ai,remote-ai]" || \
+     pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir -e ".[dev,ocr,ai,remote-ai]") && \
+    (pip install --no-cache-dir paddleocr paddlepaddle pdf2image || \
+     pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir paddleocr paddlepaddle pdf2image || true)
 
 # Switch back to docsray user
 USER docsray

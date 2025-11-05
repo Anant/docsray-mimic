@@ -4,7 +4,7 @@
 # ============================================================================
 # Build stage
 # ============================================================================
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # Set build arguments
 ARG BUILDPLATFORM
@@ -17,6 +17,8 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     git \
+    ca-certificates \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -32,14 +34,20 @@ COPY src/ ./src/
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+# Set pip trusted hosts for environments with SSL issues
+ENV PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org"
+
 # Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -e .
+# Use --trusted-host as fallback for environments with SSL issues
+RUN (pip install --no-cache-dir --upgrade pip setuptools wheel || \
+     pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir --upgrade pip setuptools wheel) && \
+    (pip install --no-cache-dir -e . || \
+     pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir -e .)
 
 # ============================================================================
 # Runtime stage
 # ============================================================================
-FROM python:3.11-slim as runtime
+FROM python:3.11-slim AS runtime
 
 # Set metadata labels
 LABEL org.opencontainers.image.title="Docsray MCP Server"
@@ -75,12 +83,16 @@ RUN groupadd -r docsray && useradd -r -g docsray -d /app -s /bin/bash docsray
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+# Set pip trusted hosts for environments with SSL issues
+ENV PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org"
+
 # Set working directory and copy source code
 WORKDIR /app
 COPY --chown=docsray:docsray . .
 
 # Install the package in the runtime environment
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir -e . || \
+    pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir -e .
 
 # Create directories for data and cache
 RUN mkdir -p /app/data /app/cache /app/logs && \
@@ -92,7 +104,7 @@ USER docsray
 # Set environment variables for production
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH="/app/src:$PYTHONPATH" \
+    PYTHONPATH="/app/src" \
     DOCSRAY_CACHE_DIR="/app/cache" \
     DOCSRAY_LOG_LEVEL="INFO" \
     DOCSRAY_TRANSPORT="stdio"
@@ -110,7 +122,7 @@ CMD ["docsray", "start"]
 # ============================================================================
 # Development stage (optional)
 # ============================================================================
-FROM runtime as development
+FROM runtime AS development
 
 # Switch back to root to install dev dependencies
 USER root
@@ -124,7 +136,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install development Python packages
-RUN pip install --no-cache-dir -e ".[dev,ocr,ai]"
+RUN pip install --no-cache-dir -e ".[dev,ocr,ai]" || \
+    pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir -e ".[dev,ocr,ai]"
 
 # Switch back to docsray user
 USER docsray

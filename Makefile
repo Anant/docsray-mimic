@@ -94,10 +94,10 @@ test-coverage:
 
 # Docker targets
 docker-build:
-	docker build -t docsray-mcp .
+	docker build --target runtime -t docsray-mcp .
 
 docker-build-dev:
-	docker build -f .devcontainer/Dockerfile -t docsray-mcp:dev .
+	docker build --target development -t docsray-mcp:dev .
 
 docker-test: docker-build
 	@echo "Running Docker container tests..."

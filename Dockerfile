@@ -39,10 +39,10 @@ ENV PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org"
 
 # Install Python dependencies
 # Use --trusted-host as fallback for environments with SSL issues
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel || \
-    pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -e . || \
-    pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir -e .
+RUN (pip install --no-cache-dir --upgrade pip setuptools wheel || \
+     pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir --upgrade pip setuptools wheel) && \
+    (pip install --no-cache-dir -e . || \
+     pip install --trusted-host $PIP_TRUSTED_HOST --no-cache-dir -e .)
 
 # ============================================================================
 # Runtime stage

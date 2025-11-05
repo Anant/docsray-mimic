@@ -381,6 +381,9 @@ Return a JSON object with the requested fields: {json.dumps(schema)}"""
         try:
             from mistralai.models import SystemMessage, UserMessage
 
+            logger.debug(f"Classifying {len(pages)} pages with model: {model}")
+            logger.debug(f"Classification labels: {labels}")
+
             response = await self._client.chat.complete_async(
                 model=model,
                 messages=[
@@ -388,17 +391,39 @@ Return a JSON object with the requested fields: {json.dumps(schema)}"""
                     UserMessage(content=json.dumps(pages)),
                 ],
                 temperature=temperature,
+                response_format={"type": "json_object"},
             )
 
-            result_text = (
-                response.choices[0].message.content if response.choices else "[]"
-            )
-            result = json.loads(result_text)
+            # Extract response text with better error handling
+            if not response.choices:
+                logger.error("Mistral API returned empty response (no choices)")
+                return []
+
+            result_text = response.choices[0].message.content
+            if not result_text:
+                logger.error("Mistral API returned empty content in response")
+                return []
+
+            # Strip any whitespace and check if empty
+            result_text = result_text.strip()
+            if not result_text:
+                logger.error("Mistral API returned whitespace-only content")
+                return []
+
+            logger.debug(f"Raw classification response: {result_text[:200]}...")
+
+            # Parse JSON with better error handling
+            try:
+                result = json.loads(result_text)
+            except json.JSONDecodeError as je:
+                logger.error(f"Failed to parse Mistral response as JSON: {je}")
+                logger.error(f"Response text: {result_text[:500]}")
+                return []
 
             return self._validate_classification_result(result, pages, labels)
 
         except Exception as e:
-            logger.error(f"Page classification failed: {e}")
+            logger.error(f"Page classification failed: {e}", exc_info=True)
             return []
 
     async def extract_fields(
@@ -428,6 +453,10 @@ Return a JSON object with the requested fields: {json.dumps(schema)}"""
         try:
             from mistralai.models import SystemMessage, UserMessage
 
+            logger.debug(f"Extracting fields with model: {model}")
+            logger.debug(f"Schema fields: {[f['name'] for f in schema.get('fields', [])]}")
+            logger.debug(f"Processing {len(inputs)} page(s)")
+
             response = await self._client.chat.complete_async(
                 model=model,
                 messages=[
@@ -435,17 +464,43 @@ Return a JSON object with the requested fields: {json.dumps(schema)}"""
                     UserMessage(content=json.dumps(inputs)),
                 ],
                 temperature=temperature,
+                response_format={"type": "json_object"},
             )
 
-            result_text = (
-                response.choices[0].message.content if response.choices else "{}"
-            )
-            result = json.loads(result_text)
+            # Extract response text with better error handling
+            if not response.choices:
+                error_msg = "Mistral API returned empty response (no choices)"
+                logger.error(error_msg)
+                return {"fields": [], "errors": [error_msg]}
+
+            result_text = response.choices[0].message.content
+            if not result_text:
+                error_msg = "Mistral API returned empty content in response"
+                logger.error(error_msg)
+                return {"fields": [], "errors": [error_msg]}
+
+            # Strip any whitespace and check if empty
+            result_text = result_text.strip()
+            if not result_text:
+                error_msg = "Mistral API returned whitespace-only content"
+                logger.error(error_msg)
+                return {"fields": [], "errors": [error_msg]}
+
+            logger.debug(f"Raw extraction response: {result_text[:200]}...")
+
+            # Parse JSON with better error handling
+            try:
+                result = json.loads(result_text)
+            except json.JSONDecodeError as je:
+                error_msg = f"Failed to parse Mistral response as JSON: {je}"
+                logger.error(error_msg)
+                logger.error(f"Response text: {result_text[:500]}")
+                return {"fields": [], "errors": [error_msg]}
 
             return self._validate_extraction_result(result, schema)
 
         except Exception as e:
-            logger.error(f"Field extraction failed: {e}")
+            logger.error(f"Field extraction failed: {e}", exc_info=True)
             return {"fields": [], "errors": [str(e)]}
 
     async def summarize_pages(
@@ -509,13 +564,16 @@ Return a JSON object with the requested fields: {json.dumps(schema)}"""
         return f"""You are analyzing a company's annual report. Below is a list of pages with page numbers
 and text samples. Classify each page into one of these categories: {', '.join(labels)}.
 
-Return JSON array with format: [{{"page": int, "label": string, "confidence": float}}].
+IMPORTANT: You MUST return a JSON object with a "labels" array containing the classification results.
+
+Return JSON object with this exact format: {{"labels": [{{"page": int, "label": string, "confidence": float}}]}}.
 
 Rules:
 - Do not include EBITDA reconciliation pages under income_statement
 - Multi-page sections should have same label across consecutive pages
 - Use 'other' for unclassifiable pages
-- Confidence must be between 0.0 and 1.0"""
+- Confidence must be between 0.0 and 1.0
+- Return ONLY the JSON object, no other text"""
 
     def _build_extraction_prompt(self, schema: dict[str, Any]) -> str:
         """Build system prompt for field extraction."""
@@ -529,14 +587,16 @@ Rules:
         return f"""Extract the following fields from financial statement text:
 {fields_desc}
 
-Return JSON with format: [{{"name": string, "value": typed_value, "confidence": float,
-"source": {{"page": int, "lineIdx": int?}}}}].
+IMPORTANT: You MUST return ONLY a valid JSON object, with no additional text or explanation.
+
+Return JSON object with this exact format: {{"fields": [{{"name": string, "value": typed_value, "confidence": float, "source": {{"page": int, "lineIdx": int?}}}}], "errors": []}}.
 
 Rules:
 - Return null for missing fields
 - Include confidence score (0.0-1.0)
 - Preserve data types (numbers as numbers, dates as ISO strings)
-- Extract source page and line index when possible"""
+- Extract source page and line index when possible
+- Return ONLY the JSON object, no other text"""
 
     def _build_summary_prompt(self, style: str) -> str:
         """Build system prompt for summarization."""
@@ -556,17 +616,42 @@ Focus on factual information and key data points. Avoid speculation."""
     ) -> list[dict[str, Any]]:
         """Validate and clean classification results."""
         if not isinstance(result, list):
-            result = result.get("labels", []) if isinstance(result, dict) else []
+            if isinstance(result, dict):
+                result = result.get("labels", [])
+                if not result:
+                    logger.warning("Classification result dict has no 'labels' key")
+            else:
+                logger.warning(f"Expected list or dict, got {type(result)}")
+                result = []
 
         validated = []
+        skipped = 0
         for item in result:
-            if isinstance(item, dict) and all(
-                k in item for k in ["page", "label", "confidence"]
-            ):
-                if item["label"] in labels or item["label"] == "other":
-                    if 0.0 <= item["confidence"] <= 1.0:
-                        validated.append(item)
+            if not isinstance(item, dict):
+                skipped += 1
+                continue
 
+            if not all(k in item for k in ["page", "label", "confidence"]):
+                logger.warning(f"Classification item missing required keys: {item}")
+                skipped += 1
+                continue
+
+            if item["label"] not in labels and item["label"] != "other":
+                logger.warning(f"Invalid label '{item['label']}' not in {labels}")
+                skipped += 1
+                continue
+
+            if not 0.0 <= item["confidence"] <= 1.0:
+                logger.warning(f"Invalid confidence {item['confidence']} for page {item.get('page')}")
+                skipped += 1
+                continue
+
+            validated.append(item)
+
+        if skipped > 0:
+            logger.warning(f"Skipped {skipped} invalid classification items")
+
+        logger.info(f"Validated {len(validated)} out of {len(result)} classification results")
         return validated
 
     def _validate_extraction_result(
@@ -574,16 +659,32 @@ Focus on factual information and key data points. Avoid speculation."""
     ) -> dict[str, Any]:
         """Validate and clean extraction results."""
         if not isinstance(result, dict):
-            return {"fields": [], "errors": ["Invalid result format"]}
+            logger.warning(f"Expected dict result, got {type(result)}")
+            return {"fields": [], "errors": ["Invalid result format: expected dict"]}
 
         fields = result.get("fields", [])
         errors = result.get("errors", [])
 
-        validated_fields = []
-        for field in fields:
-            if isinstance(field, dict) and all(
-                k in field for k in ["name", "value", "confidence"]
-            ):
-                validated_fields.append(field)
+        if not isinstance(fields, list):
+            logger.warning(f"Fields is not a list: {type(fields)}")
+            fields = []
 
+        validated_fields = []
+        skipped = 0
+        for field in fields:
+            if not isinstance(field, dict):
+                skipped += 1
+                continue
+
+            if not all(k in field for k in ["name", "value", "confidence"]):
+                logger.warning(f"Field missing required keys: {field}")
+                skipped += 1
+                continue
+
+            validated_fields.append(field)
+
+        if skipped > 0:
+            logger.warning(f"Skipped {skipped} invalid field extractions")
+
+        logger.info(f"Validated {len(validated_fields)} out of {len(fields)} extracted fields")
         return {"fields": validated_fields, "errors": errors}

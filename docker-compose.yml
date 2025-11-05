@@ -83,9 +83,9 @@ services:
       - DOCSRAY_CACHE_ENABLED=true
       # Add your API keys via .env file or environment
       # - DOCSRAY_LLAMAPARSE_API_KEY=${LLAMAPARSE_API_KEY}
-      # - DOCSRAY_MISTRAL_API_KEY=${MISTRAL_API_KEY}
-      # - DOCSRAY_MISTRAL_ENABLED=true
-      # - DOCSRAY_MIMIC_ENABLED=true
+       - DOCSRAY_MISTRAL_API_KEY=${MISTRAL_API_KEY}
+       - DOCSRAY_MISTRAL_ENABLED=true
+       - DOCSRAY_MIMIC_ENABLED=true
     volumes:
       # Mount source code for development
       - .:/app

@@ -75,20 +75,37 @@ Coolify is a self-hostable platform-as-a-service alternative to Heroku. Here's h
 - Access to your Coolify dashboard
 - This repository pushed to a Git provider (GitHub, GitLab, etc.)
 
+### Quick Start
+
+This repository includes a `coolify.json` configuration file that automatically tells Coolify to use the Dockerfile buildpack. Simply connect your repository to Coolify and deploy - no additional configuration needed!
+
+The `coolify.json` file contains:
+```json
+{
+  "build": {
+    "build_pack": "dockerfile",
+    "base_directory": "./"
+  },
+  "network": {
+    "ports": [3000]
+  }
+}
+```
+
 ### Deployment Steps
 
 1. **Create a New Service**
    - In Coolify dashboard, click "New Service"
-   - Select "Docker Compose" or "Dockerfile"
-   - Connect to your Git repository
+   - Select your Git repository
+   - Coolify will automatically detect the `coolify.json` configuration and use the Dockerfile buildpack
 
 2. **Configuration for Dockerfile Deployment**
-   - **Build Command**: `make docker-build` (or `docker build --target runtime -t docsray-mcp .`)
-   - **Container Port**: 3000 (if using HTTP mode)
+   - **Build Pack**: Automatically set to "Dockerfile" via `coolify.json`
+   - **Container Port**: 3000 (configured in `coolify.json` for HTTP mode)
    - **Health Check**: `/health` endpoint (for HTTP mode)
 
-3. **Configuration for Docker Compose Deployment**
-   - Point to `docker-compose.yml`
+3. **Alternative: Manual Docker Compose Deployment**
+   - If you prefer Docker Compose, point to `docker-compose.yml`
    - Select which service to deploy (docsray-mcp or docsray-http)
 
 4. **Environment Variables**
@@ -151,6 +168,16 @@ For HTTP mode deployments, Coolify can use the built-in health check:
 - **Retries**: 3
 
 ## Troubleshooting
+
+### Coolify Can't Find Dockerfile
+
+If Coolify reports that it can't find the Dockerfile:
+
+1. Ensure the `coolify.json` file is present in the repository root
+2. Verify that `build_pack` is set to `"dockerfile"` in `coolify.json`
+3. Check that the base directory is set to `"./"` in `coolify.json`
+4. In Coolify dashboard, manually select "Dockerfile" as the build pack if auto-detection fails
+5. Verify your repository has the latest changes including `coolify.json`
 
 ### Build Fails with SSL Errors
 

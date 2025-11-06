@@ -1,0 +1,12 @@
+{
+  "$schema": "https://docs.coolify.io/coolify.schema.json",
+  "name": "docsray-mcp",
+  "description": "AI-powered document perception and analysis MCP server",
+  "build": {
+    "build_pack": "dockerfile",
+    "base_directory": "./"
+  },
+  "network": {
+    "ports": [3000]
+  }
+}

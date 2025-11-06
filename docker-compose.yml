@@ -39,11 +39,11 @@ services:
     container_name: docsray-http
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3010:3010"
     environment:
       - DOCSRAY_TRANSPORT=http
       - DOCSRAY_HTTP_HOST=0.0.0.0
-      - DOCSRAY_HTTP_PORT=3000
+      - DOCSRAY_HTTP_PORT=3010
       - DOCSRAY_LOG_LEVEL=INFO
       - DOCSRAY_PYMUPDF_ENABLED=true
       - DOCSRAY_CACHE_ENABLED=true
@@ -69,11 +69,11 @@ services:
     container_name: docsray-dev
     restart: unless-stopped
     ports:
-      - "3001:3000"
+      - "3011:3010"
     environment:
       - DOCSRAY_TRANSPORT=http
       - DOCSRAY_HTTP_HOST=0.0.0.0
-      - DOCSRAY_HTTP_PORT=3000
+      - DOCSRAY_HTTP_PORT=3010
       - DOCSRAY_LOG_LEVEL=DEBUG
       - DOCSRAY_PYMUPDF_ENABLED=true
       - DOCSRAY_PYTESSERACT_ENABLED=true

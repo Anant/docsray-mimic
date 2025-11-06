@@ -8,7 +8,8 @@ services:
   docsray-dev:
     build:
       context: .
-      dockerfile: .devcontainer/Dockerfile
+      dockerfile: Dockerfile
+      target: development
     container_name: docsray-dev
     restart: unless-stopped
     ports:
@@ -48,7 +49,8 @@ services:
   jupyter:
     build:
       context: .
-      dockerfile: .devcontainer/Dockerfile
+      dockerfile: Dockerfile
+      target: development
     container_name: docsray-jupyter
     restart: unless-stopped
     ports:
@@ -87,7 +89,8 @@ services:
   test-docs:
     build:
       context: .
-      dockerfile: .devcontainer/Dockerfile
+      dockerfile: Dockerfile
+      target: development
     container_name: docsray-test-docs
     environment:
       - DOCSRAY_LOG_LEVEL=DEBUG

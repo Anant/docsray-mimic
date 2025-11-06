@@ -68,14 +68,12 @@ build_images() {
         exit 1
     fi
     
-    # Build dev image
-    if [ -f ".devcontainer/Dockerfile" ]; then
-        print_status "Building development Docker image..."
-        if docker build -f .devcontainer/Dockerfile -t "$DEV_IMAGE_NAME" .; then
-            print_success "Development image built successfully"
-        else
-            print_warning "Failed to build development image"
-        fi
+    # Build dev image from development target
+    print_status "Building development Docker image from development target..."
+    if docker build --target development -t "$DEV_IMAGE_NAME" .; then
+        print_success "Development image built successfully"
+    else
+        print_warning "Failed to build development image"
     fi
 }
 
